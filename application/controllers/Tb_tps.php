@@ -1,0 +1,159 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Tb_tps extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Tb_tps_model');
+        $this->load->library('form_validation');
+    }
+
+    public function index()
+    {
+        $q = urldecode($this->input->get('q', TRUE));
+        $start = intval($this->input->get('start'));
+        
+        if ($q <> '') {
+            $config['base_url'] = base_url() . 'tb_tps/index.html?q=' . urlencode($q);
+            $config['first_url'] = base_url() . 'tb_tps/index.html?q=' . urlencode($q);
+        } else {
+            $config['base_url'] = base_url() . 'tb_tps/index.html';
+            $config['first_url'] = base_url() . 'tb_tps/index.html';
+        }
+
+        $config['per_page'] = 10;
+        $config['page_query_string'] = TRUE;
+        $config['total_rows'] = $this->Tb_tps_model->total_rows($q);
+        $tb_tps = $this->Tb_tps_model->get_limit_data($config['per_page'], $start, $q);
+
+        $this->load->library('pagination');
+        $this->pagination->initialize($config);
+
+        $data = array(
+            'tb_tps_data' => $tb_tps,
+            'q' => $q,
+            'pagination' => $this->pagination->create_links(),
+            'total_rows' => $config['total_rows'],
+            'start' => $start,
+        );
+        $this->load->view('tb_tps/tb_tps_list', $data);
+    }
+
+    public function read($id) 
+    {
+        $row = $this->Tb_tps_model->get_by_id($id);
+        if ($row) {
+            $data = array(
+		'id' => $row->id,
+		'id_kelurahan' => $row->id_kelurahan,
+		'no_tps' => $row->no_tps,
+	    );
+            $this->load->view('tb_tps/tb_tps_read', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('tb_tps'));
+        }
+    }
+
+    public function create() 
+    {
+        $data = array(
+            'button' => 'Create',
+            'action' => site_url('tb_tps/create_action'),
+	    'id' => set_value('id'),
+	    'id_kelurahan' => set_value('id_kelurahan'),
+	    'no_tps' => set_value('no_tps'),
+	);
+        $data['kelurahan'] = $this->Tb_tps_model->get_kelurahan();
+        $this->load->view('tb_tps/tb_tps_form', $data);
+    }
+    
+    public function create_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->create();
+        } else {
+            $data = array(
+		'id_kelurahan' => $this->input->post('id_kelurahan',TRUE),
+		'no_tps' => $this->input->post('no_tps',TRUE),
+	    );
+
+            $this->Tb_tps_model->insert($data);
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('tb_tps'));
+        }
+    }
+    
+    public function update($id) 
+    {
+        $row = $this->Tb_tps_model->get_by_id($id);
+
+        if ($row) {
+            $data = array(
+                'button' => 'Update',
+                'action' => site_url('tb_tps/update_action'),
+		'id' => set_value('id', $row->id),
+		'id_kelurahan' => set_value('id_kelurahan', $row->id_kelurahan),
+		'no_tps' => set_value('no_tps', $row->no_tps),
+	    );
+            $this->load->view('tb_tps/tb_tps_form', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('tb_tps'));
+        }
+    }
+    
+    public function update_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->update($this->input->post('id', TRUE));
+        } else {
+            $data = array(
+		'id_kelurahan' => $this->input->post('id_kelurahan',TRUE),
+		'no_tps' => $this->input->post('no_tps',TRUE),
+	    );
+
+            $this->Tb_tps_model->update($this->input->post('id', TRUE), $data);
+            $this->session->set_flashdata('message', 'Update Record Success');
+            redirect(site_url('tb_tps'));
+        }
+    }
+    
+    public function delete($id) 
+    {
+        $row = $this->Tb_tps_model->get_by_id($id);
+
+        if ($row) {
+            $this->Tb_tps_model->delete($id);
+            $this->session->set_flashdata('message', 'Delete Record Success');
+            redirect(site_url('tb_tps'));
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('tb_tps'));
+        }
+    }
+
+    public function _rules() 
+    {
+	$this->form_validation->set_rules('id_kelurahan', 'id kelurahan', 'trim|required');
+	$this->form_validation->set_rules('no_tps', 'no tps', 'trim|required');
+
+	$this->form_validation->set_rules('id', 'id', 'trim');
+	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+    }
+
+}
+
+/* End of file Tb_tps.php */
+/* Location: ./application/controllers/Tb_tps.php */
+/* Please DO NOT modify this information : */
+/* Generated by Harviacode Codeigniter CRUD Generator 2018-12-02 16:01:25 */
+/* http://harviacode.com */
